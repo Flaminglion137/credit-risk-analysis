@@ -23,7 +23,7 @@ Python, Pandas, Matplotlib, Seaborn, Scikit-learn
 Source: Kaggle — Loan Prediction Dataset
 
 ## Live site
-flaminglion137.github.io/credit-risk-analysis
+(flaminglion137.github.io/credit-risk-analysis)
 
 ## How to run
 Open the notebook in VS Code or view the live site above
