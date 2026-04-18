@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Who Gets a Loan? A Credit Risk Analysis</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f7f8fc;
+      --surface:   #ffffff;
+      --border:    #e4e7ef;
+      --accent:    #3b6fd4;
+      --accent-dk: #2a52a8;
+      --text:      #1a1d27;
+      --muted:     #5c6278;
+      --green:     #2e8b57;
+      --red:       #c0392b;
+      --radius:    12px;
+      --shadow:    0 2px 16px rgba(0,0,0,.07);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      height: 56px;
+      box-shadow: var(--shadow);
+    }
+
+    nav .brand {
+      font-weight: 700;
+      font-size: .95rem;
+      color: var(--accent);
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    nav a {
+      text-decoration: none;
+      font-size: .875rem;
+      color: var(--muted);
+      font-weight: 500;
+      transition: color .2s;
+    }
+
+    nav a:hover { color: var(--accent); }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(135deg, #1e3a6e 0%, #3b6fd4 60%, #5b8fe8 100%);
+      color: #fff;
+      padding: 5rem 2rem 4rem;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      font-weight: 800;
+      letter-spacing: -.5px;
+      margin-bottom: 1rem;
+    }
+
+    .hero p {
+      max-width: 640px;
+      margin: 0 auto 2rem;
+      font-size: 1.05rem;
+      opacity: .9;
+      line-height: 1.8;
+    }
+
+    .badge-row {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: .6rem;
+    }
+
+    .badge {
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 100px;
+      padding: .3rem .9rem;
+      font-size: .8rem;
+      font-weight: 600;
+      letter-spacing: .3px;
+    }
+
+    /* ── LAYOUT ── */
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    section { padding: 4rem 0; }
+
+    section + section { border-top: 1px solid var(--border); }
+
+    h2 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: .4rem;
+    }
+
+    .section-sub {
+      color: var(--muted);
+      margin-bottom: 2.5rem;
+      font-size: .95rem;
+    }
+
+    /* ── STAT CARDS ── */
+    .stat-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
+      margin-bottom: 3rem;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.4rem 1.2rem;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .stat-card .number {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: .3rem;
+    }
+
+    .stat-card .label {
+      font-size: .78rem;
+      color: var(--muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    /* ── CHART CARDS ── */
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: 1.8rem;
+    }
+
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-card img {
+      width: 100%;
+      display: block;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .chart-body { padding: 1.4rem 1.5rem; }
+
+    .chart-body h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: .5rem;
+    }
+
+    .chart-body p {
+      font-size: .9rem;
+      color: var(--muted);
+      line-height: 1.7;
+    }
+
+    .chart-card.wide {
+      grid-column: 1 / -1;
+    }
+
+    /* ── MODEL RESULTS ── */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.4rem;
+      margin-bottom: 2rem;
+    }
+
+    .result-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.6rem;
+      box-shadow: var(--shadow);
+    }
+
+    .result-card h3 {
+      font-size: .8rem;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: .8rem;
+    }
+
+    .result-card p {
+      font-size: .92rem;
+      line-height: 1.75;
+      color: var(--text);
+    }
+
+    .result-card .highlight {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--accent);
+      display: block;
+      margin-bottom: .4rem;
+    }
+
+    .tag {
+      display: inline-block;
+      border-radius: 6px;
+      padding: .15rem .55rem;
+      font-size: .78rem;
+      font-weight: 700;
+      margin-right: .3rem;
+    }
+
+    .tag-green { background: #e6f4ed; color: var(--green); }
+    .tag-red   { background: #fdecea; color: var(--red); }
+
+    /* ── CONFUSION MATRIX TABLE ── */
+    .cm-wrap { overflow-x: auto; margin: 1.5rem 0; }
+
+    table {
+      border-collapse: collapse;
+      font-size: .88rem;
+      width: 100%;
+    }
+
+    th, td {
+      border: 1px solid var(--border);
+      padding: .7rem 1rem;
+      text-align: center;
+    }
+
+    thead th {
+      background: var(--bg);
+      font-weight: 600;
+      color: var(--muted);
+      font-size: .8rem;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+    }
+
+    .cm-tn { background: #e6f4ed; font-weight: 700; color: var(--green); }
+    .cm-tp { background: #e6f4ed; font-weight: 700; color: var(--green); }
+    .cm-fp { background: #fdecea; font-weight: 700; color: var(--red); }
+    .cm-fn { background: #fdecea; font-weight: 700; color: var(--red); }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--text);
+      color: rgba(255,255,255,.55);
+      text-align: center;
+      padding: 2rem;
+      font-size: .82rem;
+    }
+
+    footer strong { color: rgba(255,255,255,.85); }
+
+    /* ── MOBILE ── */
+    @media (max-width: 600px) {
+      nav ul { gap: 1rem; }
+      .chart-grid { grid-template-columns: 1fr; }
+      .chart-card.wide { grid-column: auto; }
+      .hero { padding: 3.5rem 1.2rem 3rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a class="brand" href="#home">Credit Risk Analysis</a>
+    <ul>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#findings">Findings</a></li>
+      <li><a href="#models">Models</a></li>
+    </ul>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero" id="home">
+    <h1>Who Gets a Loan?</h1>
+    <p>
+      An end-to-end credit risk analysis using a real-world dataset of 614 loan
+      applicants. We explored approval patterns, built predictive models, and
+      identified the features that matter most to lenders.
+    </p>
+    <div class="badge-row">
+      <span class="badge">614 Applicants</span>
+      <span class="badge">13 Features</span>
+      <span class="badge">Random Forest</span>
+      <span class="badge">Logistic Regression</span>
+      <span class="badge">86% Accuracy</span>
+    </div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <section id="overview">
+    <div class="container">
+      <h2>Project Overview</h2>
+      <p class="section-sub">Dataset snapshot and key statistics after cleaning</p>
+
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="number">614</div>
+          <div class="label">Applicants</div>
+        </div>
+        <div class="stat-card">
+          <div class="number">13</div>
+          <div class="label">Features</div>
+        </div>
+        <div class="stat-card">
+          <div class="number">69%</div>
+          <div class="label">Approval Rate</div>
+        </div>
+        <div class="stat-card">
+          <div class="number">149</div>
+          <div class="label">Missing Values Cleaned</div>
+        </div>
+        <div class="stat-card">
+          <div class="number">86%</div>
+          <div class="label">Model Accuracy</div>
+        </div>
+      </div>
+
+      <div class="result-card">
+        <h3>About the Dataset</h3>
+        <p>
+          The dataset contains loan application records including applicant demographics
+          (gender, marital status, dependents, education), financial details
+          (applicant income, co-applicant income, loan amount, loan term), credit
+          history, and property area. The target variable is <strong>Loan_Status</strong>
+          — whether the loan was approved (Y) or rejected (N).
+          <br><br>
+          Missing values across 7 columns were imputed using <strong>median</strong> for
+          numerical features and <strong>mode</strong> for categorical features before
+          any modelling was performed.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINDINGS -->
+  <section id="findings">
+    <div class="container">
+      <h2>Exploratory Findings</h2>
+      <p class="section-sub">What patterns emerge before any modelling?</p>
+
+      <div class="chart-grid">
+
+        <!-- Chart 1 -->
+        <div class="chart-card">
+          <img src="chart1.png" alt="Loan approval rate by gender" />
+          <div class="chart-body">
+            <h3>Gender vs Approval Rate</h3>
+            <p>
+              Male and female applicants have broadly similar approval rates, with
+              males marginally higher. Gender alone is a weak predictor — the overlap
+              suggests other factors (income, credit history) drive decisions far more
+              than gender does.
+            </p>
+          </div>
+        </div>
+
+        <!-- Chart 2 -->
+        <div class="chart-card">
+          <img src="chart2.png" alt="Loan approval rate by credit history" />
+          <div class="chart-body">
+            <h3>Credit History vs Approval Rate</h3>
+            <p>
+              This is the starkest split in the entire dataset. Applicants
+              <em>with</em> a credit history are approved at a dramatically higher
+              rate than those without one. Having no credit history is effectively a
+              near-automatic rejection — making it the single most important factor
+              in the dataset.
+            </p>
+          </div>
+        </div>
+
+        <!-- Chart 3 -->
+        <div class="chart-card">
+          <img src="chart3.png" alt="Applicant income distribution by loan status" />
+          <div class="chart-body">
+            <h3>Income Distribution by Loan Outcome</h3>
+            <p>
+              Approved and rejected applicants share a very similar income
+              distribution — the medians are close and both groups contain high-income
+              outliers. This tells us income alone does not determine approval.
+              Lenders are weighing creditworthiness and loan size relative to income,
+              not income in isolation.
+            </p>
+          </div>
+        </div>
+
+        <!-- Chart 4 -->
+        <div class="chart-card">
+          <img src="chart4.png" alt="Random forest feature importance" />
+          <div class="chart-body">
+            <h3>Feature Importance (Random Forest)</h3>
+            <p>
+              The Random Forest confirms that <strong>Credit History</strong> is the
+              top predictor, followed by <strong>Applicant Income</strong> and
+              <strong>Loan Amount</strong>. Together these three account for over 60%
+              of the model's predictive power. Demographic features like gender,
+              marital status, and self-employment sit at the bottom — almost
+              irrelevant once financial features are known.
+            </p>
+          </div>
+        </div>
+
+        <!-- Chart 5 -->
+        <div class="chart-card wide">
+          <img src="chart5.png" alt="Logistic regression confusion matrix" />
+          <div class="chart-body">
+            <h3>Confusion Matrix — Logistic Regression</h3>
+            <p>
+              The logistic regression model achieves <strong>86.18% accuracy</strong>
+              on unseen test data. It correctly identifies the vast majority of
+              approved loans (84 out of 85) but misclassifies 16 rejected loans as
+              approved. See the Model Results section below for the full business
+              interpretation.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- MODELS -->
+  <section id="models">
+    <div class="container">
+      <h2>Model Results</h2>
+      <p class="section-sub">Logistic Regression evaluated on a held-out 20% test set (123 applicants)</p>
+
+      <div class="results-grid">
+
+        <div class="result-card">
+          <h3>Overall Accuracy</h3>
+          <span class="highlight">86.18%</span>
+          <p>
+            The logistic regression model correctly classified 106 out of 123
+            test applicants. It outperformed the Random Forest (82.9%) on
+            this dataset, likely because the decision boundary between approved
+            and rejected loans is broadly linear once features are scaled.
+          </p>
+        </div>
+
+        <div class="result-card">
+          <h3>What the Confusion Matrix Shows</h3>
+          <p>
+            <span class="tag tag-green">22 True Negatives</span> Correctly rejected<br>
+            <span class="tag tag-green">84 True Positives</span> Correctly approved<br>
+            <span class="tag tag-red">16 False Positives</span> Rejected but approved<br>
+            <span class="tag tag-red">1 False Negative</span> Approved but rejected<br>
+            <br>
+            The model is highly sensitive to approvals (recall 99%) but
+            only catches 58% of true rejections — it leans toward approving.
+          </p>
+        </div>
+
+        <div class="result-card">
+          <h3>Business Implication of 16 False Positives</h3>
+          <p>
+            Each false positive represents a loan that <em>should have been
+            rejected</em> but was approved by the model. In a real lending
+            context these are the costliest errors — they translate directly
+            to credit losses if the borrower defaults.
+            <br><br>
+            A production model should be tuned to reduce false positives by
+            lowering the classification threshold (e.g. from 0.5 to 0.35),
+            accepting slightly more false negatives (missed approvals) in
+            exchange for fewer bad loans issued.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- Confusion matrix table -->
+      <div class="result-card">
+        <h3>Confusion Matrix Breakdown</h3>
+        <div class="cm-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th>Predicted: Rejected (N)</th>
+                <th>Predicted: Approved (Y)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Actual: Rejected (N)</strong></td>
+                <td class="cm-tn">22 &nbsp;✓ True Negative</td>
+                <td class="cm-fp">16 &nbsp;✗ False Positive</td>
+              </tr>
+              <tr>
+                <td><strong>Actual: Approved (Y)</strong></td>
+                <td class="cm-fn">1 &nbsp;✗ False Negative</td>
+                <td class="cm-tp">84 &nbsp;✓ True Positive</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer>
+    <p>Built with <strong>Python</strong> · pandas · scikit-learn · matplotlib · seaborn</p>
+    <p style="margin-top:.4rem;">Credit Risk Analysis · Dataset: 614 loan applicants</p>
+  </footer>
+
+</body>
+</html>
